@@ -202,31 +202,36 @@ def add_text_to_pdf(rotate_pdf_path, output_pdf_path, image_coordinates, logfile
         pdf_writer = PdfWriter()  # Create a new PDF writer
         preprocess_images = []  # List to store modified pages
         error_message = str(e)
-        if "incorrect startxref pointer(1)" in error_message.lower():
-            pdf_reader = PdfReader(rotate_pdf_path, strict=False)  # Read the default PDF
+        try:
+            if "incorrect startxref pointer(1)" in error_message.lower():
+                pdf_reader = PdfReader(rotate_pdf_path, strict=False)  # Read the default PDF
 
-            # Iterate through each page of the existing PDF
-            for page_number in range(len(pdf_reader.pages)):
-                page_ = pdf_reader.pages[page_number]
-                page_text = len(page_.extract_text().split())
+                # Iterate through each page of the existing PDF
+                for page_number in range(len(pdf_reader.pages)):
+                    page_ = pdf_reader.pages[page_number]
+                    page_text = len(page_.extract_text().split())
 
-                # Process each page without threading
-                page_over_write(rotate_pdf_path, page_number + 1, image_coordinates, page_, page_text,
-                                preprocess_images,
-                                logfile)
+                    # Process each page without threading
+                    page_over_write(rotate_pdf_path, page_number + 1, image_coordinates, page_, page_text,
+                                    preprocess_images,
+                                    logfile)
 
-            # Arrange pages in the correct order
-            gp_pages = sorted(preprocess_images, key=lambda x: list(x.keys())[0])  # Arrange page format
-            for i, page_opt_ in enumerate(gp_pages):
-                page_opt = list(dict(page_opt_).values())[0]
-                pdf_writer.add_page(page_opt)
+                # Arrange pages in the correct order
+                gp_pages = sorted(preprocess_images, key=lambda x: list(x.keys())[0])  # Arrange page format
+                for i, page_opt_ in enumerate(gp_pages):
+                    page_opt = list(dict(page_opt_).values())[0]
+                    pdf_writer.add_page(page_opt)
 
-            # Write the result to the output PDF file
-            with open(output_pdf_path, 'wb') as output_pdf:
-                pdf_writer.write(output_pdf)
-                return "Successfully Converted"
+                # Write the result to the output PDF file
+                with open(output_pdf_path, 'wb') as output_pdf:
+                    pdf_writer.write(output_pdf)
+                    return "Successfully Converted"
+            else:
+                log_exception("In OCR Module add_text_to_pdf", logfile)
+                print("Error in adding text to PDF", error_message)
+                return "Error in adding text to PDF"
 
-        log_exception("In OCR Module add_text_to_pdf", logfile)
-        print("Error in adding text to PDF", error_message)
-        return "Error in adding text to PDF"
-
+        except:
+            log_exception("In OCR Module add_text_to_pdf", logfile)
+            print("Error in adding text to PDF", error_message)
+            return "Error in adding text to PDF"

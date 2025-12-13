@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import os
+import pdfplumber
 import subprocess
 import sys
 import time
@@ -510,6 +511,60 @@ def rotateFunc(input_pdf_path, rotation_pdf_path, log_file, dpi=dpi, ):
         log_exception("rotateFunc", log_file)
 
 
+def wordCordinates(pdf_file_path, logfile):
+    try:
+        words_coordinates = []
+        with pdfplumber.open(pdf_file_path) as pdf:
+            for page_num, page in enumerate(pdf.pages):
+                words = page.extract_words()
+                height, width = page.height, page.width
+
+                for word in words:
+                    words_coordinates.append({
+                        "text": word["text"],
+                        "Page": page_num + 1,
+                        "x0": word["x0"],
+                        "y0": word["top"],
+                        "x1": word["x1"],
+                        "y1": word["bottom"],
+                        "height": height,
+                        "width": width
+                    })
+
+        return words_coordinates
+
+    except Exception as e:
+        log_exception("In app.py wordCordinates", logfile)
+
+
+def ocr_text(rotate_pdf_path, logfile):
+    try:
+        all_text = []
+        word_coordinates = []
+        doc = fitz.open(rotate_pdf_path)
+        for i in tqdm(range(len(doc))):
+            try:
+                page = doc.load_page(i)
+                page.set_rotation(0)
+
+                pix_ori = page.get_pixmap()
+                zoom_x = dpi / pix_ori.xres
+                zoom_y = dpi / pix_ori.yres
+                mat = fitz.Matrix(zoom_x, zoom_y)
+                pix = page.get_pixmap(matrix=mat)
+                img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
+                image_arr = Image.fromarray(img)
+
+                text = pytesseract.image_to_string(image_arr, config="--psm 6 -c min_characters_to_try=15")
+                all_text.append(text)
+            except:
+                log_exception("ocr_Text loop:", logfile)
+        word_coordinates = wordCordinates(rotate_pdf_path, logfile)
+        return all_text, word_coordinates
+    except:
+        log_exception("ocr_Text:", logfile)
+
+
 def Easyocr_text(rotate_pdf_path, logfile):
     try:
 
@@ -608,7 +663,7 @@ def compress_file(output_path, img_pdf_path, logfile):
         log_exception("compress_file", logfile)
 
 
-def ocr_method(base64File, format, logfile):
+def ocr_method(method, base64File, format, logfile):
     try:
         base_Coder = base64.b64decode(base64File)
 
@@ -658,14 +713,16 @@ def ocr_method(base64File, format, logfile):
             if not wait_for_pdf_ready(rotate_pdf_path, len(fitz.open(input_pdf_path))):
                 log_exception("PDF not ready for OCR", logfile)
                 return []
-            all_res = Easyocr_text(rotate_pdf_path, logfile)
-
-            coordinates = []
-            all_text = []
-            if all_res:
-                for i, data in enumerate(all_res):
-                    all_text.append(data["text"])
-                    coordinates.append(data["coordinates"])
+            if method == "easyocr":
+                all_res = Easyocr_text(rotate_pdf_path, logfile)
+                coordinates = []
+                all_text = []
+                if all_res:
+                    for i, data in enumerate(all_res):
+                        all_text.append(data["text"])
+                        coordinates.append(data["coordinates"])
+            else:
+                all_text, coordinates = ocr_text(rotate_pdf_path, logfile)
 
             annot_pdf_path = os.path.join(split_path[0], f"annot_{split_path[1]}")
             remove_annotations(rotate_pdf_path, annot_pdf_path, logfile)
@@ -677,7 +734,8 @@ def ocr_method(base64File, format, logfile):
                 return []
             output_pdf_path = os.path.join(split_path[0], f"converted_{split_path[1]}")
             # RE - EDIT
-            add_text_to_pdf(compress_pdf_path, output_pdf_path, coordinates, logfile)
+            if method == "easyocr":
+                add_text_to_pdf(compress_pdf_path, output_pdf_path, coordinates, logfile)
             # REMOVE PATH
             if os.path.isfile(input_pdf_path):
                 os.remove(input_pdf_path)

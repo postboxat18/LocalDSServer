@@ -56,7 +56,7 @@ def groq_process():
             data = request.json
             prompt = data["prompt"]
             inputText = data["text"]
-            result = groq_method(inputText, prompt,logfile)
+            result = groq_method(inputText, prompt, logfile)
             return json.dumps(result)
         else:
             return {"failed": "400"}
@@ -64,6 +64,7 @@ def groq_process():
     except Exception as e:
         tb = e.__traceback__
         return {"error": f"{str(tb.tb_lineno)},{str(e)}"}
+
 
 # @app.route('/vllm', methods=['POST'])
 # def vllm_process():
@@ -83,15 +84,16 @@ def rag_process():
     return json.dumps(result)
 
 
-@app.route('/easyocr', methods=['POST'])
-def easyocr_process():
+@app.route('/ocr', methods=['POST'])
+def ocr_process():
     try:
         # image = request.files.get("file")
-        process_logger("EASY OCR", logfile)
         data = request.json
         base64File = data["base64"]
         format = data["format"]
-        result = ocr_method(base64File, format, logfile)
+        method = data["method"]
+        process_logger(f"OCR : {method}", logfile)
+        result = ocr_method(method, base64File, format, logfile)
         return result
     except Exception as e:
         log_exception("EasyOcr_APP", logfile)

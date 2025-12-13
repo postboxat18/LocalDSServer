@@ -3,10 +3,8 @@ import json
 from datetime import datetime
 import sys
 
-client = Groq()
 config_data = json.loads(open("config.json", "r+").read())
-
-
+client = Groq(api_key=config_data["groq_key"])
 def log_exception(func_name, logfile):
     exc_type, exc_obj, tb = sys.exc_info()
     lineno = tb.tb_lineno
@@ -44,7 +42,7 @@ def groq_method(context, prompt, logfile):
             res = chunk.choices[0].delta.content or ""
             if res:
                 all_res.append(res)
-        return all_res
+        return " ".join(all_res)
     except:
         log_exception("groq_method:", logfile)
-        return []
+        return ""

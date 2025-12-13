@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 outputPath = os.getcwd()
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-gspath = r"C:\Program Files\gs\gs10.04.0"
+gspath = r"C:\Program Files\gs\gs10.04.0\bin\gswin64c.exe"
 dpi = 300
 
 

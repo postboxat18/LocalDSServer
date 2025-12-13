@@ -1,8 +1,10 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import json
 
-model_name = "Qwen/Qwen2.5-1.5B-Instruct"
-tokenizer = AutoTokenizer.from_pretrained(model_name, token='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')
-model = AutoModelForCausalLM.from_pretrained(model_name, token='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')
+config_data = json.loads(open("config.json", "r+").read())
+model_name = config_data["ollama_model"]
+tokenizer = AutoTokenizer.from_pretrained(model_name, token=config_data["hf_write"])
+model = AutoModelForCausalLM.from_pretrained(model_name, token=config_data["hf_write"])
 
 
 def ollama_method(texts, prompt):

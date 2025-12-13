@@ -12,7 +12,6 @@ from RAG_method import rag_method
 from ocr_process import ocr_method
 from groq_method import groq_method
 from ollama_method import ollama_method
-from langchain_method import langchain_method
 
 outputPath = os.getcwd()
 logfile = os.path.join(outputPath, "vllm_flask_log.txt")
@@ -65,25 +64,6 @@ def groq_process():
     except Exception as e:
         tb = e.__traceback__
         return {"error": f"{str(tb.tb_lineno)},{str(e)}"}
-
-
-
-@app.post('/langchain')
-def langchain_process():
-    try:
-        if request.method == 'POST':
-            data = request.json
-            prompt = data["prompt"]
-            inputText = data["text"]
-            result = langchain_method(inputText, prompt,logfile)
-            return json.dumps(result)
-        else:
-            return {"failed": "400"}
-
-    except Exception as e:
-        tb = e.__traceback__
-        return {"error": f"{str(tb.tb_lineno)},{str(e)}"}
-
 
 # @app.route('/vllm', methods=['POST'])
 # def vllm_process():

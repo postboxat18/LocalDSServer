@@ -46,7 +46,7 @@ def getRag(logfile):
         return ""
 
 
-def rag_method(all_text, query, logfile):
+def rag_method(fileName,all_text, query, logfile):
     try:
         total_texts = ""
         chunk_list = []

@@ -80,7 +80,8 @@ def rag_process():
     data = request.json
     all_text = data["all_text"]
     query = data["query"]
-    result = rag_method(all_text, query, logfile)
+    fileName = data["fileName"]
+    result = rag_method(fileName, all_text, query, logfile)
     return json.dumps(result)
 
 
